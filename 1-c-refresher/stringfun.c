@@ -106,9 +106,67 @@ void print_words_and_lengths(char *buff, int len) {
 
 
 void replace_word(char *buff, char *find, char *replace, int len) {
-    fprintf(stderr, "Not Implemented!\n");
+    char *pos = buff;           // Pointer to traverse the buffer
+    int find_len = 0;           // Length of the string to find
+    int replace_len = 0;        // Length of the replacement string
+    int remaining_len;          // Remaining length in the buffer after the replacement
+
+    // Calculate the lengths of 'find' and 'replace' strings
+    while (*(find + find_len) != '\0') {
+        find_len++;
+    }
+    while (*(replace + replace_len) != '\0') {
+        replace_len++;
+    }
+
+    // Find the first occurrence of 'find' in the buffer
+    while (*pos != '\0' && *pos != '.') {
+        char *current = pos;
+        char *search = find;
+        
+        // Check if the current substring matches 'find'
+        while (*current == *search && *search != '\0') {
+            current++;
+            search++;
+        }
+
+        // If we found a match
+        if (*search == '\0') {
+            remaining_len = len - (current - buff);
+
+            // Check if the replacement will cause buffer overflow
+            if (remaining_len < replace_len - find_len) {
+                fprintf(stderr, "Error: Replacement causes buffer overflow\n");
+                exit(3);
+            }
+
+            // Shift the remaining characters to accommodate the replacement
+            if (replace_len > find_len) {
+                for (char *shift_pos = buff + len - 1; shift_pos >= current; shift_pos--) {
+                    *(shift_pos + (replace_len - find_len)) = *shift_pos;
+                }
+            } else if (replace_len < find_len) {
+                for (char *shift_pos = current; *shift_pos != '\0'; shift_pos++) {
+                    *(shift_pos - (find_len - replace_len)) = *shift_pos;
+                }
+            }
+
+            // Copy the replacement string into the buffer
+            for (int i = 0; i < replace_len; i++) {
+                *(pos + i) = *(replace + i);
+            }
+
+            return; // Only replace the first occurrence
+        }
+
+        pos++;
+    }
+
+    // If no match was found
+    fprintf(stderr, "Error: String '%s' not found in buffer\n", find);
     exit(3);
 }
+
 
 
 void reverse_string(char *buff, int len) {
@@ -234,7 +292,9 @@ int main(int argc, char *argv[]){
                 exit(1);
             }
 	    replace_word(buff, argv[3], argv[4], BUFFER_SZ);
-	
+	    printf("Modified String: %s\n", buff);
+	    break;
+
 	default:
             usage(argv[0]);
             free(buff);
