@@ -18,10 +18,16 @@ void print_words_and_lengths(char *, int);
 void replace_word(char *, char *, char *, int);
 
 int setup_buff(char *buff, char *user_str, int len) {
+
     char *src = user_str;  // Pointer to the source string
     char *dst = buff;      // Pointer to the destination buffer
     int count = 0;         // Tracks the number of characters written
     int space_added = 0;   // Tracks if a space was recently added
+
+    // Skip leading spaces
+    while (*src == ' ' || *src == '\t') {
+        src++;
+    }
 
     // Process the user-supplied string
     while (*src != '\0') {
@@ -44,6 +50,12 @@ int setup_buff(char *buff, char *user_str, int len) {
             space_added = 0;  // Reset the space flag
         }
         src++;
+    }
+
+    // Remove trailing space
+    if (count > 0 && *(dst - 1) == ' ') {
+        dst--;
+        count--;
     }
 
     // Fill the remaining buffer with dots
@@ -75,7 +87,8 @@ void print_words_and_lengths(char *buff, int len) {
     char *start = NULL;  // Start pointer for the current word
     int word_count = 0;  // Word counter
 
-    printf("Word Print\n----------\n");
+    printf("Word Print\n");
+    printf("----------\n");
 
     for (int i = 0; i < len && *ptr != '.'; i++) {
         if (*ptr == ' ') {
@@ -85,7 +98,7 @@ void print_words_and_lengths(char *buff, int len) {
                 for (char *p = start; p < ptr; p++) {
                     putchar(*p);
                 }
-                printf(" (%ld)\n", ptr - start);
+                printf("(%ld)\n", ptr - start);
                 start = NULL;  // Reset the start pointer
             }
         } else if (!start) {
@@ -102,6 +115,7 @@ void print_words_and_lengths(char *buff, int len) {
         }
         printf(" (%ld)\n", ptr - start);
     }
+    printf("\nNumber of words returned: %d\n", word_count);
 }
 
 
@@ -282,12 +296,21 @@ int main(int argc, char *argv[]){
         //       the case statement options
 	case 'r':
 	    reverse_string(buff, user_str_len);
-	    printf("Reversed String: %s\n", buff);
+	    printf("Buffer:  [");
+    	    for (int i = 0; i < BUFFER_SZ; i++) {
+            	putchar(buff[i]);
+    	    }	
+    	    printf("]\n");
 	    break;
 	
 	case 'w':
             print_words_and_lengths(buff, BUFFER_SZ);
-            break;
+	    printf("Buffer:  [");
+    	    for (int i = 0; i < BUFFER_SZ; i++) {
+            	putchar(buff[i]);
+    	     }	
+    	     printf("]\n");
+             break;
 
         case 'x':
             if (argc < 5) {
@@ -297,7 +320,11 @@ int main(int argc, char *argv[]){
                 exit(1);
             }
 	    replace_word(buff, argv[3], argv[4], BUFFER_SZ);
-	    printf("Modified String: %s\n", buff);
+	    printf("Buffer:  [");
+    	    for (int i = 0; i < BUFFER_SZ; i++) {
+        	putchar(buff[i]);
+    	    }		
+    	    printf("]\n");
 	    break;
 
 	default:
