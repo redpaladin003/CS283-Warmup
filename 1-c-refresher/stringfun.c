@@ -271,6 +271,11 @@ int main(int argc, char *argv[]){
                 exit(2);
             }
             printf("Word Count: %d\n", rc);
+    	    printf("Buffer:  [");
+    	    for (int i = 0; i < BUFFER_SZ; i++) {
+            	putchar(buff[i]);
+    	    }	
+    	    printf("]\n");
             break;
 
         //TODO:  #5 Implement the other cases for 'r' and 'w' by extending
@@ -302,24 +307,7 @@ int main(int argc, char *argv[]){
     }
 
     //TODO:  #6 Dont forget to free your buffer before exiting
-    print_buff(buff,BUFFER_SZ);
+    
     free(buff);
     exit(0);
 }
-
-//TODO:  #7  Notice all of the helper functions provided in the 
-//          starter take both the buffer as well as the length.  Why
-//          do you think providing both the pointer and the length
-//          is a good practice, after all we know from main() that 
-//          the buff variable will have exactly 50 bytes?
-//  
-// TODO: 7 Answer:
-
-// Passing both the buffer pointer and its length to helper functions is a good practice because:
-// 1. It prevents buffer overflows by allowing functions to check that they don’t exceed the buffer's size.
-// 2. It makes the functions flexible and reusable, as they can handle buffers of different sizes without modification.
-// 3. It improves code readability and self-documentation, as it explicitly shows the size of the data the function operates on.
-// 4. It provides future-proofing, so if the buffer size changes or becomes dynamic, the functions will still work correctly.
-// Even though we know from main() that the buffer is exactly 50 bytes, this practice ensures robustness and safety.
-// The same principle applies to functions like count_words(), reverse_string(). They rely on the passed len to ensure they only operate within the valid range of the buffer.
-
