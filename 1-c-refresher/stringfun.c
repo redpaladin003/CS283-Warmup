@@ -113,7 +113,7 @@ void print_words_and_lengths(char *buff, int len) {
         for (char *p = start; p < ptr; p++) {
             putchar(*p);
         }
-        printf(" (%ld)\n", ptr - start);
+        printf("(%ld)\n", ptr - start);
     }
     printf("\nNumber of words returned: %d\n", word_count);
 }
