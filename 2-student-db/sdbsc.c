@@ -62,26 +62,37 @@ int open_db(char *dbFile, bool should_truncate)
  */
 int get_student(int fd, int id, student_t *s)
 {
-    //TO DO
-    int offset = id * STUDENT_RECORD_SIZE;
-    if (lseek(fd, offset, SEEK_SET) == -1)
+    student_t temp;
+    off_t current_pos;
+    
+    // Move to beginning of file
+    if (lseek(fd, 0, SEEK_SET) == -1)
     {
-        return ERR_DB_FILE;  // File I/O issue
+        return ERR_DB_FILE;
     }
-
-    if (read(fd, s, STUDENT_RECORD_SIZE) != STUDENT_RECORD_SIZE)
+    
+    // Read through records until we find the matching ID
+    while ((current_pos = lseek(fd, 0, SEEK_CUR)) != -1)
     {
-        return SRCH_NOT_FOUND;  // Student not found
+        ssize_t bytes_read = read(fd, &temp, STUDENT_RECORD_SIZE);
+        if (bytes_read == 0)  // EOF
+        {
+            return SRCH_NOT_FOUND;
+        }
+        if (bytes_read != STUDENT_RECORD_SIZE)
+        {
+            return ERR_DB_FILE;
+        }
+        
+        if (temp.id == id)
+        {
+            memcpy(s, &temp, STUDENT_RECORD_SIZE);
+            return NO_ERROR;
+        }
     }
-
-    if (memcmp(s, &EMPTY_STUDENT_RECORD, STUDENT_RECORD_SIZE) == 0)
-    {
-        return SRCH_NOT_FOUND;  // Student was deleted or empty
-    }
-
-    return NO_ERROR;  // Student found successfully
+    
+    return SRCH_NOT_FOUND;
 }
-
     
 
 /*
@@ -203,9 +214,9 @@ int del_student(int fd, int id)
 
     // Print success message
     printf(M_STD_DEL_MSG, id);
+    
     return NO_ERROR;
 }
-
 
 
 /*
