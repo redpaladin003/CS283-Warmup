@@ -41,113 +41,103 @@
  *      CMD_WARN_NO_CMD    if the user entered a blank command
  *      CMD_ERR_PIPE_LIMIT if the user entered too */
 
-typedef struct {
-    int spaces;   // leading spaces
-    int length;   // number of characters
-    char ch;      // character to repeat
-    int newline;  // should print newline after
-} dragon_rle;
+const char* DREXEL_MASCOT = "\
+                                                                        @%%%%                       \n\
+                                                                     %%%%%%                         \n\
+                                                                    %%%%%%                          \n\
+                                                                 % %%%%%%%           @              \n\
+                                                                %%%%%%%%%%        %%%%%%%           \n\
+                                       %%%%%%%  %%%%@         %%%%%%%%%%%%@    %%%%%%  @%%%%        \n\
+                                  %%%%%%%%%%%%%%%%%%%%%%      %%%%%%%%%%%%%%%%%%%%%%%%%%%%          \n\
+                                %%%%%%%%%%%%%%%%%%%%%%%%%%   %%%%%%%%%%%% %%%%%%%%%%%%%%%           \n\
+                               %%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%%%     %%%            \n\
+                             %%%%%%%%%%%%%%%%%%%%%%%%%%%%@ @%%%%%%%%%%%%%%%%%%        %%            \n\
+                            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%%%%%%                \n\
+                            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%              \n\
+                            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%@%%%%%%@              \n\
+      %%%%%%%%@           %%%%%%%%%%%%%%%%        %%%%%%%%%%%%%%%%%%%%%%%%%%      %%                \n\
+    %%%%%%%%%%%%%         %%@%%%%%%%%%%%%           %%%%%%%%%%% %%%%%%%%%%%%      @%                \n\
+  %%%%%%%%%%   %%%        %%%%%%%%%%%%%%            %%%%%%%%%%%%%%%%%%%%%%%%                        \n\
+ %%%%%%%%%       %         %%%%%%%%%%%%%             %%%%%%%%%%%%@%%%%%%%%%%%                       \n\
+%%%%%%%%%@                % %%%%%%%%%%%%%            @%%%%%%%%%%%%%%%%%%%%%%%%%                     \n\
+%%%%%%%%@                 %%@%%%%%%%%%%%%            @%%%%%%%%%%%%%%%%%%%%%%%%%%%%                  \n\
+%%%%%%%@                   %%%%%%%%%%%%%%%           %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%              \n\
+%%%%%%%%%%                  %%%%%%%%%%%%%%%          %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%      %%%%  \n\
+%%%%%%%%%@                   @%%%%%%%%%%%%%%         %%%%%%%%%%%%@ %%%% %%%%%%%%%%%%%%%%%   %%%%%%%%\n\
+%%%%%%%%%%                  %%%%%%%%%%%%%%%%%        %%%%%%%%%%%%%      %%%%%%%%%%%%%%%%%% %%%%%%%%%\n\
+%%%%%%%%%@%%@                %%%%%%%%%%%%%%%%@       %%%%%%%%%%%%%%     %%%%%%%%%%%%%%%%%%%%%%%%  %%\n\
+ %%%%%%%%%%                  % %%%%%%%%%%%%%%@        %%%%%%%%%%%%%%   %%%%%%%%%%%%%%%%%%%%%%%%%% %%\n\
+  %%%%%%%%%%%%  @           %%%%%%%%%%%%%%%%%%        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  %%% \n\
+   %%%%%%%%%%%%% %%  %  %@ %%%%%%%%%%%%%%%%%%          %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    %%% \n\
+    %%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%%%%%%           @%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    %%%%%%% \n\
+     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%              %%%%%%%%%%%%%%%%%%%%%%%%%%%%        %%%   \n\
+      @%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%                  %%%%%%%%%%%%%%%%%%%%%%%%%               \n\
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%                      %%%%%%%%%%%%%%%%%%%  %%%%%%%          \n\
+           %%%%%%%%%%%%%%%%%%%%%%%%%%                           %%%%%%%%%%%%%%%  @%%%%%%%%%         \n\
+              %%%%%%%%%%%%%%%%%%%%           @%@%                  @%%%%%%%%%%%%%%%%%%   %%%        \n\
+                  %%%%%%%%%%%%%%%        %%%%%%%%%%                    %%%%%%%%%%%%%%%    %         \n\
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%                      %%%%%%%%%%%%%%            \n\
+                %%%%%%%%%%%%%%%%%%%%%%%%%%  %%%% %%%                      %%%%%%%%%%  %%%@          \n\
+                     %%%%%%%%%%%%%%%%%%% %%%%%% %%                          %%%%%%%%%%%%%@          \n\
+                                                                                 %%%%%%%@           \n";
+// Helper function to check if string is only whitespace
+static int is_empty_input(const char* input) {
+    return strlen(input) == 0 || strspn(input, " \t") == strlen(input);
+}
 
-// Compressed representation of the dragon art
-const dragon_rle dragon_data[] = {
-    {4, 4, '%', 1},   // First row
-    {5, 5, '%', 1},
-    {5, 5, '%', 1},
-    {0, 1, '%', 0}, {1, 7, '%', 1},
-    {4, 1, '@', 1},
-    {10, 10, '%', 1},
-    {7, 7, '%', 1},
-    {7, 7, '%', 0}, {4, 4, '%', 0}, {0, 4, '@', 0}, {2, 13, '%', 0}, {0, 1, '@', 1},
-    {6, 6, '%', 0}, {1, 4, '%', 1},
-    {0, 36, '%', 1},
-    {0, 36, '%', 0}, {11, 11, '%', 1},
-    {13, 13, '%', 1},
-    {0, 36, '%', 1},
-    {19, 19, '%', 0}, {3, 3, '%', 1},
-    {1, 1, '@', 0}, {0, 36, '%', 1},
-    {1, 1, '@', 0}, {19, 19, '%', 0}, {2, 2, '%', 1},
-    {0, 36, '%', 1},
-    {0, 36, '%', 1},
-    {0, 64, '%', 1},
-    {0, 47, '%', 0}, {0, 1, '@', 0}, {6, 6, '%', 0}, {0, 1, '@', 1},
-    {8, 8, '%', 0}, {0, 1, '@', 0}, {11, 11, '%', 1},
-    {0, 36, '%', 0}, {2, 2, '%', 1},
-    {11, 11, '%', 0}, {2, 2, '%', 0}, {11, 11, '%', 0}, {11, 11, '%', 1},
-    {11, 11, '%', 0}, {2, 2, '@', 0}, {1, 1, '%', 1},
-    {8, 8, '%', 0}, {3, 3, '%', 0}, {11, 11, '%', 1},
-    {0, 36, '%', 1},
-    {9, 9, '%', 0}, {0, 1, '@', 0}, {2, 2, '%', 0}, {11, 11, '%', 1},
-    {1, 1, '@', 0}, {0, 36, '%', 1},
-    {9, 9, '%', 0}, {0, 1, '@', 0}, {11, 11, '%', 1},
-    {1, 1, '@', 0}, {0, 36, '%', 1},
-    {8, 8, '%', 0}, {0, 1, '@', 0}, {11, 11, '%', 1},
-    {0, 36, '%', 1},
-    {0, 0, 0, 0}  // End marker
-};
-
-void print_compressed_dragon() {
-    const dragon_rle *curr = dragon_data;
-    while (curr->length > 0) {
-        // Print leading spaces
-        for (int i = 0; i < curr->spaces; i++) {
-            putchar(' ');
+// Helper function to display command details
+static void display_command_info(const command_list_t* cmd_list) {
+    printf(CMD_OK_HEADER, cmd_list->num);
+    for (int idx = 0; idx < cmd_list->num; idx++) {
+        printf("<%d> %s", idx + 1, cmd_list->commands[idx].exe);
+        if (strlen(cmd_list->commands[idx].args) > 0) {
+            printf(" [%s]", cmd_list->commands[idx].args);
         }
-        // Print the repeated character
-        for (int i = 0; i < curr->length; i++) {
-            putchar(curr->ch);
-        }
-        if (curr->newline) {
-            putchar('\n');
-        }
-        curr++;
+        printf("\n");
     }
 }
 
-int main() {
-    char cmd_buff[SH_CMD_MAX];
-    int rc = 0;
-    command_list_t clist;
+int main(void) {
+    char input_buffer[ARG_MAX];
+    command_list_t parsed_commands;
+    int parse_status;
 
-    while(1) {
+    while (1) {
+        // Display prompt and get input
         printf("%s", SH_PROMPT);
-        if (fgets(cmd_buff, ARG_MAX, stdin) == NULL) {
+        
+        if (fgets(input_buffer, ARG_MAX, stdin) == NULL) {
             printf("\n");
             break;
         }
         
-        // Remove the trailing newline
-        cmd_buff[strcspn(cmd_buff, "\n")] = '\0';
+        // Remove newline character
+        input_buffer[strcspn(input_buffer, "\n")] = '\0';
         
-        // Check for exit command
-        if (strcmp(cmd_buff, EXIT_CMD) == 0) {
-            break;
+        // Handle special commands
+        if (strcmp(input_buffer, EXIT_CMD) == 0) {
+            exit(0);
         }
-
-        // Check for dragon command
-        if (strcmp(cmd_buff, "dragon") == 0) {
-            print_compressed_dragon();
+        
+        if (strcmp(input_buffer, "dragon") == 0) {
+            printf("%s", DREXEL_MASCOT);
             continue;
         }
         
-        // Parse the command line
-        rc = build_cmd_list(cmd_buff, &clist);
-        
-        // Handle different return codes
-        if (rc == WARN_NO_CMDS) {
+        // Handle empty input
+        if (is_empty_input(input_buffer)) {
             printf(CMD_WARN_NO_CMD);
-        } else if (rc == ERR_TOO_MANY_COMMANDS) {
+            continue;
+        }
+        
+        // Process command
+        parse_status = build_cmd_list(input_buffer, &parsed_commands);
+        
+        // Handle results
+        if (parse_status == ERR_TOO_MANY_COMMANDS) {
             printf(CMD_ERR_PIPE_LIMIT, CMD_MAX);
-        } else if (rc == OK) {
-            printf(CMD_OK_HEADER, clist.num);
-            
-            // Print each command
-            for (int i = 0; i < clist.num; i++) {
-                printf("<%d> %s", i + 1, clist.commands[i].exe);
-                if (strlen(clist.commands[i].args) > 0) {
-                    printf("[%s]", clist.commands[i].args);
-                }
-                printf("\n");
-            }
+        } else if (parse_status == OK) {
+            display_command_info(&parsed_commands);
         }
     }
     
